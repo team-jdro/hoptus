@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoptaus</title>
+    <style>
+        body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #c0eaff; /* Light sky color */
+    font-family: 'Arial', sans-serif;
+}
+
+#gameArea {
+    position: relative;
+    width: 100vw;
+    height: 200px;
+    background: linear-gradient(to bottom, #87ceeb, #f0e68c); /* Sky to ground gradient */
+    border-top: 2px solid #000;
+    overflow: hidden;
+    display: none;
+    border-radius: 0px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Add some shadow to game area */
+    background-image: url('path_texture.png'), linear-gradient(to bottom, #87ceeb, #f0e68c); /* Adding ground texture */
+    background-repeat: repeat-x;
+    background-position: bottom;
+}
+
+#ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    background: #deb887; /* Sandy ground color */
+    box-shadow: inset 0 5px 10px rgba(0, 0, 0, 0.2); /* Inner shadow for depth */
+}
+
+#dino {
+    position: absolute;
+    bottom: 0; /* Place dino directly on the ground */
+    left: 20px;
+    width: 40px; /* Reduced width */
+    height: 40px; /* Reduced height */
+    background: #3c3c3c;
+    border-radius: 50px; /* Smaller border radius due to smaller size */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Adjusted shadow to match smaller size */
+    border: 3px solid #4caf50; /* Green border for dino */
+}
+
+#cactus {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    background: linear-gradient(to bottom, #228b22, #006400); /* Gradient for cactus */
+    border-radius: 5px;
+    border: 3px solid #006400; /* Dark green border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Cactus shadow */
+
+}
+
+
+
+
+
+@keyframes jumpAnimation {
+    0% { bottom: 0; }
+    50% { bottom: 130px; } /* Higher jump with consistent ground distance */
+    100% { bottom: 0; }
+}
+
+.jump {
+    animation: jumpAnimation 0.7s ease-out forwards;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+}
+
+.blink {
+    animation: blink 0.5s linear 2;
+}
+
+#score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    background: rgba(255, 255, 255, 0.7); /* Translucent background */
+    padding: 5px 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+#menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6cffff, #1e90ff);
+    flex-direction: column;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+}
+
+#menu h1 {
+    margin-bottom: 20px;
+    font-size: 48px;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#menu button {
+    padding: 15px 30px;
+    font-size: 24px;
+    cursor: pointer;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#menu button:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-5px);
+}
+
+#gameOverModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family: 'Arial', sans-serif;
+}
+
+#gameOverModal div {
+    font-size: 36px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#gameOverModal button {
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#gameOverModal button:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-5px);
+}
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h1>Hoptaus</h1>
+        <button id="startButton">Start Game</button>
+        <h6>You will get 1 extra bonus point.</h6>
+    </div>
+    <div id="gameArea">
+        <div id="dino"></div>
+        <div id="cactus"></div>
+        
+
+        <div id="score">Score: 0</div>
+    </div>
+    <div id="gameOverModal">
+        <div id="gameOverText"></div>
+        <button id="restartButton">Restart Game</button>
+    </div>
+
+    <script>
+const dino = document.getElementById('dino');
+const cactus = document.getElementById('cactus');
+const gameArea = document.getElementById('gameArea');
+const startButton = document.getElementById('startButton');
+const gameOverModal = document.getElementById('gameOverModal');
+const gameOverText = document.getElementById('gameOverText');
+const restartButton = document.getElementById('restartButton');
+const scoreElement = document.getElementById('score');
+
+let isJumping = false;
+let isGameOver = false;
+let score = 0;
+let cactusPos;
+let cactusSpeed = 6; // Initial speed
+let gameStarted = false; // Flag to prevent unwanted jumps
+
+function jump() {
+    if (!gameStarted || isJumping || isGameOver) return;
+    isJumping = true;
+    dino.classList.add('jump');
+    setTimeout(() => {
+        dino.classList.remove('jump');
+        isJumping = false;
+    }, 700); // Duration must match the animation duration
+}
+
+function updateScore() {
+    score++; // Increase the score by 1
+    scoreElement.textContent = `Score: ${score}`; // Update the score display
+
+    // Add a blinking animation every 5 points as a visual cue
+    if (score % 5 === 0) {
+        scoreElement.classList.add('blink');
+        setTimeout(() => {
+            scoreElement.classList.remove('blink');
+        }, 1000);
+    }
+
+    // Increase cactus speed by 5% every 10 points
+    if (score % 10 === 0) {
+        cactusSpeed *= 1.05; // Increase the speed
+    }
+}
+
+function randomizeCactusSize() {
+    const minHeight = 30;
+    const maxHeight = 60;
+    const randomHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+    cactus.style.height = `${randomHeight}px`;
+}
+
+function startGame() {
+    // Reset initial states to ensure a clean start
+    isGameOver = false;
+    isJumping = false;
+    score = 0;
+    cactusPos = gameArea.clientWidth;
+    cactusSpeed = 6; // Reset speed to initial value
+
+    gameStarted = false; // Prevent jumps before game actually starts
+    document.getElementById('menu').style.display = 'none'; // Hide menu
+    gameOverModal.style.display = 'none'; // Hide game over modal
+    gameArea.style.display = 'block'; // Show game area
+
+    scoreElement.textContent = `Score: ${score}`;
+    cactus.style.right = `${gameArea.clientWidth - cactusPos}px`;
+    randomizeCactusSize(); // Set initial random cactus size
+
+    // Start game animation after a short delay
+    setTimeout(() => {
+        gameStarted = true; // Enable jumps after the game has started
+        animateCactus();
+    }, 300);
+}
+
+function animateCactus() {
+    if (isGameOver) return;
+
+    cactusPos -= cactusSpeed;
+    cactus.style.right = `${gameArea.clientWidth - cactusPos}px`;
+
+    // Check if cactus has moved off-screen
+    if (cactusPos < -cactus.clientWidth) {
+        cactusPos = gameArea.clientWidth;
+        randomizeCactusSize(); // Randomize size when cactus resets
+        updateScore(); // Update score only after cactus resets
+    }
+
+    checkCollision();
+    requestAnimationFrame(animateCactus);
+}
+
+function checkCollision() {
+    if (isGameOver) return;
+
+    const dinoRect = dino.getBoundingClientRect();
+    const cactusRect = cactus.getBoundingClientRect();
+
+    if (
+        dinoRect.bottom > cactusRect.top && // Bottom of Dino is below the top of the cactus
+        dinoRect.right >= cactusRect.left && // Dino's right side is to the right of cactus's left side
+        dinoRect.left <= cactusRect.right && // Dino's left side is to the left of cactus's right side
+        dinoRect.top < cactusRect.bottom // Top of Dino is above the bottom of the cactus
+    ) {
+        endGame();
+    }
+}
+
+function endGame() {
+    isGameOver = true;
+    gameStarted = false; // Prevent further jumps
+    gameArea.style.display = 'none'; // Hide game area
+    gameOverText.textContent = `Game Over! Your Score: ${score}`;
+
+    gameOverModal.style.display = 'flex'; // Show game over modal
+
+    // Vibrate for 500 milliseconds when the game is over
+    if (navigator.vibrate) {
+        navigator.vibrate(500);
+    } else {
+        console.log("Vibration not supported on this device.");
+    }
+}
+
+function restartGame() {
+    document.getElementById('menu').style.display = 'flex'; // Show menu
+    gameOverModal.style.display = 'none'; // Hide game over modal
+}
+
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', () => {
+    // Hide menu and show game area for a fresh start
+    document.getElementById('menu').style.display = 'none';
+    startGame();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') jump();
+});
+document.addEventListener('touchstart', jump);
+
+
+    </script>
+    
+
+</body>
+</html>
